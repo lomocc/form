@@ -230,7 +230,7 @@ class FormImpl{
     $createHandler = (name, callback)=>{
         return (value)=>{
             let hasChanged = this.setValue(name, value);
-            let needUpdate = typeof callback != 'function' || !callback(name, value);
+            let needUpdate = typeof callback != 'function' || callback(name, value) !== false;
             hasChanged && needUpdate && this.doUpdate(name);
         };
     };

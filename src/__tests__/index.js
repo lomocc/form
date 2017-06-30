@@ -51,6 +51,8 @@ class App extends React.Component{
     }
     onDateChange = (name, value)=>{
         console.log(value);
+        this.props.form.setValues({c: value.format('YYYY-MM-DD hh:mm:ss')});
+        return true;
     };
     render(){
         let {Input, DatePicker} = this.props.form;
@@ -59,6 +61,7 @@ class App extends React.Component{
                 <Input name="a" style={{color: 'blue'}}/>
                 <Input name="b"/>
                 <Input name="c"/>
+                <Input name="c" style={{color: 'blue'}}/>
                 <DatePicker name="d" onChange={this.onDateChange}/>
                 <button onClick={this.onSubmit}>submit</button>
                 <button onClick={this.onReset}>reset</button>
