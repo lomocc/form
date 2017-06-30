@@ -4,9 +4,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import {FormWithOptions, FORM_MODE, ITEM_MODE} from '../index';
-
-@FormWithOptions({
+import FormLite from '../index';
+import DatePicker from '../DatePicker';
+import Input from '../Input';
+import moment from 'moment';
+FormLite.inject([DatePicker, Input]);
+@FormLite.create({
     a: {
         label: 'LabelA',
         description: 'A的描述',
@@ -28,6 +31,9 @@ import {FormWithOptions, FORM_MODE, ITEM_MODE} from '../index';
     }
 })
 class App extends React.Component{
+    // state = {
+    //     focused: false
+    // };
     onSubmit = ()=>{
       let values = this.props.form.getValues();
         console.log('values:', values);
@@ -35,16 +41,25 @@ class App extends React.Component{
     onReset = ()=>{
         this.props.form.removeValues(true);
     };
-    componentDidUpdate(){
-        console.log('componentDidUpdate', this.props.form.getValues());
+    // componentDidUpdate(){
+    //     console.log('componentDidUpdate', this.props.form.getValues());
+    // }
+    componentWillMount(){
+        setTimeout(()=>{
+            this.props.form.setInitialValues({c: 'ccccc', a: 'componentWillMount', d: moment('2030-12-24')}, true);
+        }, 1000);
     }
+    onDateChange = (name, value)=>{
+        console.log(value);
+    };
     render(){
-        let {Input} = this.props.form;
+        let {Input, DatePicker} = this.props.form;
         return (
             <div>
-                <Input name="a"/>
+                <Input name="a" style={{color: 'blue'}}/>
                 <Input name="b"/>
                 <Input name="c"/>
+                <DatePicker name="d" onChange={this.onDateChange}/>
                 <button onClick={this.onSubmit}>submit</button>
                 <button onClick={this.onReset}>reset</button>
             </div>

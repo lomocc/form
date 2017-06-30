@@ -21,7 +21,7 @@ app.use(webpackHotMiddleware(compiler));
 //     res.sendFile(__dirname + 'build/index.html');
 // });
 
-findFreePort(3000, function(err, freePort){
+findFreePort(4000, function(err, freePort){
     app.listen(freePort, function () {
         var host = this.address().address;
         var port = this.address().port;

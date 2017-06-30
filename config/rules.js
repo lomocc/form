@@ -54,6 +54,25 @@ module.exports = {
                 }
             }
         ])
+    }, {
+        test: /\.css/,
+        use: ExtractTextPlugin.extract([
+            {
+                loader: 'css-loader'
+            },
+            {
+                loader: 'postcss-loader',
+                options: {
+                    plugins: function () {
+                        return [
+                            require("autoprefixer")({
+                                browsers: ['ie>=9','>1% in CN']
+                            })
+                        ];
+                    }
+                }
+            }
+        ])
     }],
     server: [{
         test: /\.less$/,

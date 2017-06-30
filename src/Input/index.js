@@ -3,6 +3,6 @@
  */
 import React from 'react';
 
-export default function Input({value, onChange, ...others}){
+export default function Input({value='', onChange, ...others}){
     return <input value={value} onChange={(event)=>onChange(event.target.value)} {...others}/>;
 }

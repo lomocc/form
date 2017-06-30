@@ -1,19 +1,11 @@
 import React from 'react';
-import warning from 'warning';
-import assign from 'object-assign';
-// import Checkbox from './Checkbox';
-// import CheckboxGroup from './CheckboxGroup';
-import Input from './Input';
-// import Select from './Select';
-// import Radio from './Radio';
-// import Textarea from './Textarea';
 
-// function getDisplayName(Component) {
-//     return Component.displayName ||
-//         Component.name ||
-//         'FormComponent'
-// }
-const DefaultItemRenderer = ({label, help, required, description, children, validating, error})=>{
+function getDisplayName(Component) {
+    return Component.displayName ||
+        Component.name ||
+        'Form'
+}
+const DefaultFormRenderer = ({label, help, required, description, children, validating, error})=>{
     return (
         <div>
             <h1>{label}{required ? "*" : null}</h1>
@@ -29,69 +21,63 @@ const DefaultItemRenderer = ({label, help, required, description, children, vali
 const FORM_MODE = 'form';
 const ITEM_MODE = 'item';
 const NONE_MODE = 'none';
-
-const SUCCESS_STATUS = 'success';
-// const WARNING_STATUS = 'warning';
-const ERROR_STATUS = 'error';
-const VALIDATING_STATUS = 'validating';
 /**
- *
+ *  options:{
+    a: {
+        label: 'LabelA',
+        description: 'A的描述',
+        required: 'A必填',
+        initialValue:"AAA",
+        validator: [{
+            pattern:/.{5,10}/, message: '长度必须是5到10位'
+        }]
+    },
+    b: {
+        label: 'LabelB',
+        description: 'B的描述',
+        initialValue: 'BBB',
+        validator(value, callback){
+            setTimeout(()=>{
+                callback(value == '123456'? null: '请输入123456');
+            }, 1000);
+        }
+    }
+}
+ *  
  */
-class FormFactory{
-    // initialValues = {};
-    // values = {};
-
-    // items = {
-    //     a: {
-    //         required: '必填',
-    //         initialValue: 2,
-    //         validator: (value)=>{},
-    //         rules:[
-    //             {type: "string", pattern: schema.pattern.email, message: "invalid zip"}
-    //         ]
-    //     }
-    // };
+class FormImpl{
+    static ComponentImpls = [];
+    static inject(ComponentImpls){
+        ComponentImpls.forEach((ComponentImpl)=>{
+            if(FormImpl.ComponentImpls.indexOf(ComponentImpl) == -1) {
+                FormImpl.ComponentImpls.push(ComponentImpl);
+            }
+        });
+    }
     options;
     mode;
-    itemRenderer;
+    formRenderer;
     updateCallback;
 
-    constructor(options, mode, itemRenderer, updateCallback){
+    constructor(options, mode, formRenderer, updateCallback){
         this.options = options || {};
-        this.mode = mode || ITEM_MODE;
-        this.itemRenderer = itemRenderer || DefaultItemRenderer;
+        this.mode = mode || FORM_MODE;
+        this.formRenderer = formRenderer;
         this.updateCallback = updateCallback;
+        this.$initComponent();
     }
-    // validate = (validator, value, message, callback)=>{
-    //     if (validator) {
-    //         if (validator instanceof RegExp) {
-    //             callback(validator.test(value)?null:message);
-    //         } else if (typeof validator === 'string') {
-    //             validator = new RegExp(validator);
-    //             callback(validator.test(value)?null:message);
-    //             // if (!validator.test(value)) {
-    //             //     return false;
-    //
-    //             // if(typeof message == 'string'){
-    //             //     return message;
-    //             // }else if(typeof message == 'function'){
-    //             //     errors.push(message() || '');
-    //             // }
-    //             // }
-    //         }else if(typeof validator === 'function'){
-    //             validator(value, callback);
-    //         }
-    //     }
-    // };
+    $initComponent = ()=>{
+        FormImpl.ComponentImpls.forEach((ComponentImpl)=>this.injectComponent(ComponentImpl))
+    };
     doValidate = (name)=> {
         let option = this.options[name];
         let value = this.getValue(name);
 
         let {validator} = option;
         if(typeof validator == 'function'){
-            option.status = VALIDATING_STATUS;
+            option.validating = true;
             validator(value, (error)=>{
-                option.status = !error?SUCCESS_STATUS:ERROR_STATUS;
+                option.validating = false;
                 option.error = error;
                 this.updateCallback();
             });
@@ -108,7 +94,7 @@ class FormFactory{
                 })
                 .map(({message})=>message)
                 .join('');
-            option.status = !error?SUCCESS_STATUS:ERROR_STATUS;
+            option.validating = false;
             option.error = error;
         }
     };
@@ -241,68 +227,37 @@ class FormFactory{
         hasChanged && needUpdate && this.doUpdate();
         return hasChanged;
     };
-    // validate = (name)=>{
-    //     if(this.mode == ITEM_MODE){
-    //         let option = this.options[name];
-    //         let value = this.getValue(name);
-    //
-    //         let rules = option.rules;
-    //         if(rules && rules.length > 0){
-    //             rules.filter((rule)=>{rule.})
-    //         }
-    //
-    //     }else if(this.mode == FORM_MODE){
-    //
-    //     }
-    // };
-    // errorMessage = (name)=>{
-    //     let option = this.options[name];
-    //     if(option){
-    //         let valid = true;
-    //         return valid?null:option.message;
-    //     }
-    //     if(this.values.hasOwnProperty(name)){
-    //         return this.values[name];
-    //     }else if(this.initialValues.hasOwnProperty(name)){
-    //         return this.initialValues[name];
-    //     }
-    // };
     $createHandler = (name, callback)=>{
         return (value)=>{
             let hasChanged = this.setValue(name, value);
             let needUpdate = typeof callback != 'function' || !callback(name, value);
-            if(hasChanged && needUpdate){
-                // this.validate(name);
-                // validate
-                this.doUpdate(name);
-            }
-            // hasChanged && needUpdate && this.doUpdate();
+            hasChanged && needUpdate && this.doUpdate(name);
         };
     };
-    createElement = (Component, defaultValue)=>{
-        return ({name, onChange, initialValue, ...props})=>{
-            // this.setInitialValue(name, initialValue !== void 0?initialValue:defaultValue);
-            let ItemRendererClass = this.itemRenderer;
+    injectComponent = (ComponentImpl, formRenderer)=>{
+        let displayName = getDisplayName(ComponentImpl);
+        if(this.hasOwnProperty(displayName)){
+            return this[displayName];
+        }
+        let Component = ({name, onChange, ...props})=>{
+            let FormRenderer = formRenderer || this.formRenderer || DefaultFormRenderer;
             let option = this.options[name];
             let {label, help, required, description, status, error} = option || {};
-            console.log('render', error, option);
             return (
-                <ItemRendererClass label={label} required={required != void 0} description={description} status={status} error={error} help={help}>
-                    <Component onChange={this.$createHandler(name, onChange)} value={this.getValue(name)} {...props}/>
-                </ItemRendererClass>
+                <FormRenderer label={label} required={required != void 0} description={description} status={status} error={error} help={help}>
+                    <ComponentImpl onChange={this.$createHandler(name, onChange)} value={this.getValue(name)} {...props}/>
+                </FormRenderer>
             );
         };
+        if(!this.hasOwnProperty(displayName)){
+            this[displayName] = Component;
+        }
+        return Component;
     };
-    Input = this.createElement(Input, '');
-    // Select = this.createElement(Select, 0);
-    // Checkbox = this.createElement(Checkbox, false);
-    // Radio = this.createElement(Radio, 0);
-    // CheckboxGroup = this.createElement(CheckboxGroup, []);
-    // Textarea = this.createElement(Textarea, '');
 }
-let FormWithOptions = (options, mode, itemRenderer)=>WrappedComponent =>class FormDecorator extends React.Component{
+let create = (options, mode, formRenderer)=>WrappedComponent =>class FormDecorator extends React.Component{
     componentWillMount(){
-        this.form = new FormFactory(options, mode, itemRenderer, ::this.forceUpdate);
+        this.form = new FormImpl(options, mode, formRenderer, ::this.forceUpdate);
     }
     componentWillUnmount(){
         this.form.destroy();
@@ -313,16 +268,13 @@ let FormWithOptions = (options, mode, itemRenderer)=>WrappedComponent =>class Fo
     }
 };
 
-let Form = FormWithOptions();
+let Form = create();
 
-Form.FormWithOptions = FormWithOptions;
+Form.create = create;
+Form.inject = FormImpl.inject;
 
 Form.FORM_MODE = FORM_MODE;
 Form.ITEM_MODE = ITEM_MODE;
 Form.NONE_MODE = NONE_MODE;
-
-Form.SUCCESS_STATUS = SUCCESS_STATUS;
-Form.ERROR_STATUS = ERROR_STATUS;
-Form.VALIDATING_STATUS = VALIDATING_STATUS;
 
 module.exports = Form;
