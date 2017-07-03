@@ -18,7 +18,7 @@ const webpack_isomorphic_tools_plugin =
 //     // webpack-isomorphic-tools settings reside in a separate .js file
 //     // (because they will be used in the web server code too).
 //     new WebpackIsomorphicToolsPlugin(require('./webpack-isomorphic-tools-configuration'))
-//     // also enter development mode since it's a development webpack configuration
+//     // also enter development mMode since it's a development webpack configuration
 //     // (see below for explanation)
 //         .development();
 
@@ -40,13 +40,11 @@ function resolve (dir) {
 
 var config = {
     context: resolve(''),
-    entry: "./src/__tests__/index.js",
-    // entry: {
-    //     main: path.resolve("src/index.js"),
-    //     // "babel-polyfill":"babel-polyfill",
-    //     // "react":"react"
-    //     vendor: ["react", "babel-polyfill", "socket.io-client"]
-    // },
+    // entry: "./src/__tests__/index.js",
+    entry: {
+        main: "./src/__tests__/index.js",
+        vendor: ["react", "react-dom", "babel-polyfill"]
+    },
     output: {
         path: resolve("dist/www/"),
         filename: "[name].[hash:8].js",
@@ -80,7 +78,7 @@ var config = {
         ]),
         new ExtractTextPlugin({filename: 'style.[contenthash:8].css', allChunks: true}),
         // new webpack.LoaderOptionsPlugin({
-        //     options: {
+        //     mOptions: {
         //         postcss: function(){
         //             return [
         //                 require("autoprefixer")({

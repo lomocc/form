@@ -654,7 +654,7 @@ babel-plugin-transform-es2015-modules-commonjs@^6.24.1:
   version "6.24.1"
   resolved "https://registry.yarnpkg.com/babel-plugin-transform-es2015-modules-commonjs/-/babel-plugin-transform-es2015-modules-commonjs-6.24.1.tgz#d3e310b40ef664a36622200097c6d440298f2bfe"
   dependencies:
-    babel-plugin-transform-strict-mode "^6.24.1"
+    babel-plugin-transform-strict-mMode "^6.24.1"
     babel-runtime "^6.22.0"
     babel-template "^6.24.1"
     babel-types "^6.24.1"
@@ -804,9 +804,9 @@ babel-plugin-transform-regenerator@^6.24.1:
   dependencies:
     regenerator-transform "0.9.11"
 
-babel-plugin-transform-strict-mode@^6.24.1:
+babel-plugin-transform-strict-mMode@^6.24.1:
   version "6.24.1"
-  resolved "https://registry.yarnpkg.com/babel-plugin-transform-strict-mode/-/babel-plugin-transform-strict-mode-6.24.1.tgz#d5faf7aa578a65bbe591cf5edae04a0c67020758"
+  resolved "https://registry.yarnpkg.com/babel-plugin-transform-strict-mMode/-/babel-plugin-transform-strict-mMode-6.24.1.tgz#d5faf7aa578a65bbe591cf5edae04a0c67020758"
   dependencies:
     babel-runtime "^6.22.0"
     babel-types "^6.24.1"
@@ -3949,9 +3949,9 @@ optionator@^0.8.2:
     type-check "~0.3.2"
     wordwrap "~1.0.0"
 
-options@>=0.0.5:
+mOptions@>=0.0.5:
   version "0.0.6"
-  resolved "https://registry.yarnpkg.com/options/-/options-0.0.6.tgz#ec22d312806bb53e731773e7cdaefcf1c643128f"
+  resolved "https://registry.yarnpkg.com/mOptions/-/mOptions-0.0.6.tgz#ec22d312806bb53e731773e7cdaefcf1c643128f"
 
 os-browserify@^0.2.0:
   version "0.2.1"
@@ -5708,7 +5708,7 @@ ws@1.1.2:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/ws/-/ws-1.1.2.tgz#8a244fa052401e08c9886cf44a85189e1fd4067f"
   dependencies:
-    options ">=0.0.5"
+    mOptions ">=0.0.5"
     ultron "1.0.x"
 
 ws@^2.3.1:

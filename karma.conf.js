@@ -77,7 +77,7 @@ module.exports = function (config) {
         browsers: ['Chrome'],
 
 
-        // Continuous Integration mode
+        // Continuous Integration mMode
         // if true, Karma captures browsers, runs the tests and exits
         singleRun: false,
 
