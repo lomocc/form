@@ -13,13 +13,13 @@ import React from 'react';
 const DefaultFormRenderer = ({label, help, required, description, children, validating, error})=>{
   return (
     <div>
-      <h1>{label}{required ? "*" : null}</h1>
+      <h1>{label}{required ? '*' : null}</h1>
       <span>{description}</span>
       {help}
       <br/>
       {children}
       <br/>
-      {validating && "validating……"}{error}
+      {validating && 'validating……'}{error}
     </div>
   );
 };
@@ -41,7 +41,7 @@ let inject = (componentImpls)=>{
         label: 'LabelA',
         description: 'A的描述',
         required: 'A必填',
-        initialValue:"AAA",
+        initialValue:'AAA',
         validator: [{
             pattern:/.{5,10}/, message: '长度必须是5到10位'
         }]
@@ -117,17 +117,17 @@ class FormImpl{
   };
   setValue = (name, value, needUpdate=false)=>{
     if(this.mOptions.hasOwnProperty(name)){
-      let oldValue = this.mOptions[name].value;;
+      let oldValue = this.mOptions[name].value;
       if(oldValue !== value){
         this.mOptions[name].value = value;
-        needUpdate && this.$doUpdate(name);
+        needUpdate && this.$doUpdate(name, true);
         return true;
       }else{
         return false;
       }
     }else{
       this.mOptions[name] = {value};
-      needUpdate && this.$doUpdate(name);
+      needUpdate && this.$doUpdate(name, true);
       return true;
     }
   };
@@ -139,14 +139,14 @@ class FormImpl{
         hasChanged = true;
       }
     }
-    hasChanged && needUpdate && this.$doUpdate();
+    hasChanged && needUpdate && this.$doUpdate(null, true);
     return hasChanged;
   };
   removeValue = (name, needUpdate=false)=>{
     if(this.mOptions.hasOwnProperty(name)){
       if(this.mOptions[name].hasOwnProperty('value')){
         delete this.mOptions[name].value;
-        needUpdate && this.$doUpdate(name);
+        needUpdate && this.$doUpdate(name, true);
         return true;
       }else{
         return false;
@@ -161,26 +161,26 @@ class FormImpl{
         hasChanged = true;
       }
     }
-    hasChanged && needUpdate && this.$doUpdate();
+    hasChanged && needUpdate && this.$doUpdate(null, true);
     return hasChanged;
   };
-  setInitialValue = (name, value, needUpdate=false)=>{
+  setInitialValue = (name, value, needUpdate=false, updateValidate=false)=>{
     if(this.mOptions.hasOwnProperty(name)){
       let oldValue = this.mOptions[name].initialValue;
       if(oldValue !== value){
         this.mOptions[name].initialValue = value;
-        needUpdate && this.$doUpdate(name, false);
+        needUpdate && this.$doUpdate(name, updateValidate);
         return true;
       }else{
         return false;
       }
     }else{
       this.mOptions[name] = {initialValue: value};
-      needUpdate && this.$doUpdate(name, false);
+      needUpdate && this.$doUpdate(name, updateValidate);
       return true;
     }
   };
-  setInitialValues = (values, needUpdate=false)=>{
+  setInitialValues = (values, needUpdate=false, updateValidate=false)=>{
     let hasChanged = false;
     for (let name in values) {
       let value = values[name];
@@ -188,14 +188,14 @@ class FormImpl{
         hasChanged = true;
       }
     }
-    hasChanged && needUpdate && this.$doUpdate(null, false);
+    hasChanged && needUpdate && this.$doUpdate(null, updateValidate);
     return hasChanged;
   };
-  removeInitialValue = (name, needUpdate=false)=>{
+  removeInitialValue = (name, needUpdate=false, updateValidate=false)=>{
     if(this.mOptions.hasOwnProperty(name)){
       if(this.mOptions[name].hasOwnProperty('initialValue')){
         delete this.mOptions[name].initialValue;
-        needUpdate && this.$doUpdate(name, false);
+        needUpdate && this.$doUpdate(name, updateValidate);
         return true;
       }else{
         return false;
@@ -203,33 +203,43 @@ class FormImpl{
     }
     return false;
   };
-  removeInitialValues = (needUpdate=false)=>{
+  removeInitialValues = (needUpdate=false, updateValidate=false)=>{
     let hasChanged = false;
     for (let name in this.mOptions) {
       if(this.removeInitialValue(name)){
         hasChanged = true;
       }
     }
-    hasChanged && needUpdate && this.$doUpdate(null, false);
+    hasChanged && needUpdate && this.$doUpdate(null, updateValidate);
     return hasChanged;
   };
   $getCallbackOrder = (updateOrder)=>{
     return updateOrder?++this.mCallbackOrder:this.mCallbackOrder;
   };
-  validate = (cb=null)=>{
+  /**
+   * 验证
+   * @param cb
+   */
+  validate = (names=null, cb=null)=>{
     this.$getCallbackOrder(true);
     let validateCount = 0;
-    for (let name in this.mOptions) {
-      validateCount ++;
+    if(names && names.length > 0){
+      validateCount = names.length;
+    }else{
+      names = [];
+      for (let name in this.mOptions) {
+        validateCount ++;
+        names.push(name);
+      }
     }
-    for (let name in this.mOptions) {
+    names && names.forEach((name)=>{
       this.$doValidate(name, false, ()=>{
         validateCount --;
         if(validateCount == 0){
           cb && cb(this.getErrors(), this.getValues());
         }
       });
-    }
+    });
   };
   $doValidate = (name, updateOrder=false, cb=null)=> {
     let option = this.mOptions[name];
@@ -269,6 +279,11 @@ class FormImpl{
       cb && cb();
     }
   };
+  /**
+   * 更新显示
+   * @param name 待更新的属性名
+   * @param updateValidate 是否需要验证
+   */
   $doUpdate = (name, updateValidate=false)=>{
     if(updateValidate){
       if(this.mMode != VALIDATE_MODE_NONE){
@@ -297,7 +312,7 @@ class FormImpl{
   inject = (ComponentImpl, formRenderer)=>{
     let displayName = ComponentImpl.displayName || ComponentImpl.name;
     if(!displayName){
-      console.error('displayName is undefined');
+      console.error('displayName is undefined');// eslint-disable-line
       return;
     }
     if(this.hasOwnProperty(displayName)){

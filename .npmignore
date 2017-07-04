@@ -1,0 +1,10 @@
+/node_modules
+/src
+/test
+.babelrc
+.editorconfig
+.gitignore
+karma.config.js
+server.dev.js
+server.js
+webpack.config.js
