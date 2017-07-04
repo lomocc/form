@@ -223,9 +223,12 @@ class FormImpl{
   validate = (names=null, cb=null)=>{
     this.$getCallbackOrder(true);
     let validateCount = 0;
-    if(names && names.length > 0){
+    if(Array.isArray(names)){
       validateCount = names.length;
     }else{
+      if(typeof names == 'function'){
+        cb = names;
+      }
       names = [];
       for (let name in this.mOptions) {
         validateCount ++;
