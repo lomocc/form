@@ -309,7 +309,7 @@ class FormImpl{
     return (value)=>{
       let hasChanged = this.setValue(name, value);
       let needUpdate = typeof callback != 'function' || callback(name, value) !== false;
-      hasChanged && needUpdate && this.$doUpdate(name);
+      hasChanged && needUpdate && this.$doUpdate(name, true);
     };
   };
   inject = (ComponentImpl, formRenderer, customDisplayName)=>{
