@@ -1,7 +1,7 @@
 ﻿# formlite
 A React component for building validation forms
 
-Inspire~~copy~~ by [react-jsonschema-form](https://github.com/mozilla-services/react-jsonschema-form)
+Inspire ~~Copy~~ by [react-jsonschema-form](https://github.com/mozilla-services/react-jsonschema-form)
 
 ## Options
 
