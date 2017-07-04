@@ -81,7 +81,7 @@ class FormImpl{
   constructor(updateCallback, formRenderer){
     this.mUpdateCallback = updateCallback;
     this.mFormRenderer = formRenderer || DefaultFormRenderer;
-    helperComponentImpls.forEach((ComponentImpl)=>this.inject(ComponentImpl));
+    this.inject(helperComponentImpls);
   }
   getValue = (name)=>{
     if(this.mOptions.hasOwnProperty(name)){
@@ -312,8 +312,11 @@ class FormImpl{
       hasChanged && needUpdate && this.$doUpdate(name);
     };
   };
-  inject = (ComponentImpl, formRenderer)=>{
-    let displayName = ComponentImpl.displayName || ComponentImpl.name;
+  inject = (ComponentImpl, formRenderer, customDisplayName)=>{
+    if(Array.isArray(ComponentImpl)){
+      return ComponentImpl.map((ComponentImpl)=>this.inject(ComponentImpl));
+    }
+    let displayName = customDisplayName || ComponentImpl.displayName || ComponentImpl.name;
     if(!displayName){
       console.error('displayName is undefined');// eslint-disable-line
       return;

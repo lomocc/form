@@ -1,4 +1,6 @@
 ﻿# formlite
+A React component for building validation forms
+Inspire~~copy~~ by [react-jsonschema-form](https://github.com/mozilla-services/react-jsonschema-form)
 
 ## Options
 
@@ -26,6 +28,7 @@ class Example extends React.Component{
 ```js
 import {create} from 'formlite';
 
+// the custom form ItemRenderer
 const FormRenderer = ({label, help, required, description, children, validating, error})=>{
   return (
     <div>
@@ -48,15 +51,45 @@ class Example extends React.Component{
 }
 ```
 
-### inject
+### inject global
 ```js
-import {create, inject} from 'formlite';
+import formlite, {create, inject} from 'formlite';
+// inject components in all form
 inject([Input, DatePicker, Select]);
 
-import formlite from 'formlite';
 @formlite
 class Example extends React.Component{
   componentWillMount(){
+      this.props.form.setInitialValues({b: 'ccccc', a: 'componentWillMount', c: moment('2030-12-24')}, true);
+   }
+  onDateChange = (name, value)=>{
+    console.log(value);
+    this.props.form.setValues({b: value.format('YYYY-MM-DD hh:mm:ss')});
+    return true;
+  };
+  render(){
+    let {Input, DatePicker, Select} = this.props.form;
+    return (
+    <div>
+      <Input name="a" style={{color: 'blue'}}/>
+      <Input name="b"/>
+      <Input name="b" style={{color: 'blue'}}/>
+      <DatePicker name="c" onChange={this.onDateChange}/>
+    </div>
+    )
+  }
+}
+```
+### inject local
+```js
+import formlite, {create, inject} from 'formlite';
+
+@formlite
+class Example extends React.Component{
+  componentWillMount(){
+      // inject components in only this form
+      this.props.form.inject([Input, DatePicker, Select]);
+
       this.props.form.setInitialValues({b: 'ccccc', a: 'componentWillMount', c: moment('2030-12-24')}, true);
    }
   onDateChange = (name, value)=>{
