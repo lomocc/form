@@ -70,7 +70,7 @@ class FormImpl{
     return this.mMode;
   };
   setMode = (mode)=>{
-    this.mMode = mode || VALIDATE_MODE_ALL;
+    this.mMode = mode || this.mMode || VALIDATE_MODE_ALL;
   };
   getOption = ()=>{
     return this.mOptions;
@@ -334,7 +334,7 @@ class FormImpl{
     return Component;
   };
 }
-let create = (options, mode, formRenderer)=>WrappedComponent =>class FormDecorator extends React.Component{
+let create = (formRenderer, mode, options)=>WrappedComponent =>class FormDecorator extends React.Component{
   componentWillMount(){
     this.form = new FormImpl(::this.forceUpdate, formRenderer);
     this.form.setMode(mode);
