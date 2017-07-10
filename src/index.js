@@ -10,14 +10,18 @@ import React from 'react';
  * @returns {XML}
  * @constructor
  */
-const DefaultFormRenderer = ({label, help, required, description, children, validating, error})=>{
+const DefaultFormRenderer = ({label, help, required, description, children, validating, error, decorator})=>{
+  let style = error?{borderColor: '#f04134'}:null;
   return (
     <div>
       <h1>{label}{required ? '*' : null}</h1>
       <span>{description}</span>
       {help}
       <br/>
-      {children}
+      {
+        React.cloneElement(children, {style})
+      }
+      {/*decorator?decorator(children):children*/}
       <br/>
       {validating && 'validating……'}{error}
     </div>
@@ -78,9 +82,11 @@ class FormImpl{
   setOption = (options)=>{
     this.mOptions = options || {};
   };
+  setFormRenderer = (formRenderer)=>{
+    this.mFormRenderer = formRenderer || DefaultFormRenderer;
+  };
   constructor(updateCallback, formRenderer){
     this.mUpdateCallback = updateCallback;
-    this.mFormRenderer = formRenderer || DefaultFormRenderer;
     this.inject(helperComponentImpls);
   }
   getValue = (name)=>{
@@ -324,12 +330,12 @@ class FormImpl{
     if(this.hasOwnProperty(displayName)){
       return this[displayName];
     }
-    let Component = ({name, onChange, ...props})=>{
+    let Component = ({name, onChange, decorator, ...props})=>{
       let FormRenderer = formRenderer || this.mFormRenderer;
       let option = this.mOptions[name];
       let {label, help, required, description, status, error} = option || {};
       return (
-        <FormRenderer label={label} required={required != void 0} description={description} status={status} error={error} help={help}>
+        <FormRenderer label={label} required={required != void 0} description={description} status={status} error={error} help={help} decorator={decorator}>
           <ComponentImpl onChange={this.$createHandler(name, onChange)} value={this.getValue(name)} {...props}/>
         </FormRenderer>
       );
@@ -343,6 +349,7 @@ class FormImpl{
 let create = (formRenderer, mode, options)=>WrappedComponent =>class FormDecorator extends React.Component{
   componentWillMount(){
     this.form = new FormImpl(::this.forceUpdate, formRenderer);
+    this.form.setFormRenderer(formRenderer);
     this.form.setMode(mode);
     this.form.setOption(options);
   }
