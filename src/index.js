@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 /**
  * @param label
  * @param help
@@ -10,7 +10,7 @@ import React from 'react';
  * @returns {XML}
  * @constructor
  */
-const DefaultFormRenderer = ({label, help, required, description, children, validating, error, decorator})=>{
+const DefaultItemRenderer = ({label, help, required, description, children, validating, error})=>{
   let style = error?{borderColor: '#f04134'}:null;
   return (
     <div>
@@ -21,15 +21,14 @@ const DefaultFormRenderer = ({label, help, required, description, children, vali
       {
         React.cloneElement(children, {style})
       }
-      {/*decorator?decorator(children):children*/}
       <br/>
       {validating && 'validating……'}{error}
     </div>
   );
 };
-const VALIDATE_MODE_ALL = 'all';
-const VALIDATE_MODE_ITEM = 'item';
-const VALIDATE_MODE_NONE = 'none';
+const ALL = 'all';
+const ITEM = 'item';
+const NONE = 'none';
 
 let helperComponentImpls = [];
 let inject = (componentImpls)=>{
@@ -63,10 +62,10 @@ let inject = (componentImpls)=>{
 }
  *
  */
-class FormImpl{
+class Form{
   mOptions;
   mMode;
-  mFormRenderer;
+  mItemRenderer;
   mUpdateCallback;
   mCallbackOrder = -1;
 
@@ -74,7 +73,7 @@ class FormImpl{
     return this.mMode;
   };
   setMode = (mode)=>{
-    this.mMode = mode || this.mMode || VALIDATE_MODE_ALL;
+    this.mMode = mode || this.mMode || ALL;
   };
   getOption = ()=>{
     return this.mOptions;
@@ -82,11 +81,13 @@ class FormImpl{
   setOption = (options)=>{
     this.mOptions = options || {};
   };
-  setFormRenderer = (formRenderer)=>{
-    this.mFormRenderer = formRenderer || DefaultFormRenderer;
+  setItemRenderer = (itemRenderer)=>{
+    this.mItemRenderer = itemRenderer || DefaultItemRenderer;
   };
-  constructor(updateCallback, formRenderer){
+  constructor(updateCallback){
     this.mUpdateCallback = updateCallback;
+  }
+  $injectDefault(){
     this.inject(helperComponentImpls);
   }
   getValue = (name)=>{
@@ -295,10 +296,10 @@ class FormImpl{
    */
   $doUpdate = (name, updateValidate=false)=>{
     if(updateValidate){
-      if(this.mMode != VALIDATE_MODE_NONE){
-        if(name != void 0 && this.mMode == VALIDATE_MODE_ITEM){
+      if(this.mMode != NONE){
+        if(name != void 0 && this.mMode == ITEM){
           this.$doValidate(name, true);
-        }else if(this.mMode == VALIDATE_MODE_ALL){
+        }else if(this.mMode == ALL){
           this.validate();
         }
       }
@@ -318,7 +319,10 @@ class FormImpl{
       hasChanged && needUpdate && this.$doUpdate(name, true);
     };
   };
-  inject = (ComponentImpl, formRenderer, customDisplayName)=>{
+  inject = (ComponentImpl, itemRenderer, customDisplayName)=>{
+    if(!ComponentImpl){
+      return;
+    }
     if(Array.isArray(ComponentImpl)){
       return ComponentImpl.map((ComponentImpl)=>this.inject(ComponentImpl));
     }
@@ -330,26 +334,31 @@ class FormImpl{
     if(this.hasOwnProperty(displayName)){
       return this[displayName];
     }
-    let Component = ({name, onChange, decorator, ...props})=>{
-      let FormRenderer = formRenderer || this.mFormRenderer;
+    return this[displayName] = ({name, onChange, decorator, ...props})=>{
+      let ItemRenderer = itemRenderer || this.mItemRenderer;
       let option = this.mOptions[name];
       let {label, help, required, description, status, error} = option || {};
+      let element = <ComponentImpl onChange={this.$createHandler(name, onChange)} value={this.getValue(name)} {...props}/>;
       return (
-        <FormRenderer label={label} required={required != void 0} description={description} status={status} error={error} help={help} decorator={decorator}>
-          <ComponentImpl onChange={this.$createHandler(name, onChange)} value={this.getValue(name)} {...props}/>
-        </FormRenderer>
+        <ItemRenderer
+          label={label}
+          required={required != void 0}
+          description={description}
+          status={status}
+          error={error}
+          help={help}
+          children={decorator?decorator(element):element}
+        />
       );
     };
-    if(!this.hasOwnProperty(displayName)){
-      this[displayName] = Component;
-    }
-    return Component;
   };
 }
-let create = (formRenderer, mode, options)=>WrappedComponent =>class FormDecorator extends React.Component{
+let create = (ItemRenderer, mode, options, components)=>WrappedComponent =>class FormWrapper extends React.Component{
   componentWillMount(){
-    this.form = new FormImpl(::this.forceUpdate, formRenderer);
-    this.form.setFormRenderer(formRenderer);
+    this.form = new Form(::this.forceUpdate);
+    this.form.$injectDefault();
+    this.form.inject(components);
+    this.form.setItemRenderer(ItemRenderer);
     this.form.setMode(mode);
     this.form.setOption(options);
   }
@@ -367,8 +376,8 @@ let FormLite = create();
 FormLite.create = create;
 FormLite.inject = inject;
 
-FormLite.VALIDATE_MODE_ALL = VALIDATE_MODE_ALL;
-FormLite.VALIDATE_MODE_ITEM = VALIDATE_MODE_ITEM;
-FormLite.VALIDATE_MODE_NONE = VALIDATE_MODE_NONE;
+FormLite.ALL = ALL;
+FormLite.ITEM = ITEM;
+FormLite.NONE = NONE;
 
 module.exports = FormLite;
