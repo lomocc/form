@@ -1,7 +1,7 @@
 var webpack = require('webpack');
 var assign = require('object-assign');
 var path = require('path');
-var BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+// var BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 var filename = 'formlite';
 function getConf(filename, conf) {

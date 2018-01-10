@@ -11,18 +11,16 @@ import React from "react";
  * @constructor
  */
 const DefaultItemRenderer = ({label, help, required, description, children, validating, error})=>{
-  let style = error?{borderColor: '#f04134'}:null;
   return (
     <div>
-      <h1>{label}{required ? '*' : null}</h1>
-      <span>{description}</span>
-      {help}
-      <br/>
-      {
-        React.cloneElement(children, {style})
-      }
-      <br/>
-      {validating && 'validating……'}{error}
+      [DefaultItemRenderer]
+      label:{label}
+      required:{required}
+      description:{description}
+      help:{help}
+      children:{children}
+      validating:{validating}
+      error:{error}
     </div>
   );
 };
@@ -30,16 +28,14 @@ const ALL = 'all';
 const ITEM = 'item';
 const NONE = 'none';
 
-let helperComponentImpls = [];
-let inject = (componentImpls)=>{
-  componentImpls.forEach((ComponentImpl)=>{
-    if(helperComponentImpls.indexOf(ComponentImpl) == -1) {
-      helperComponentImpls.push(ComponentImpl);
-    }
-  });
+let defaultProps = {
+  defaultComponents: [],
+  defaultItemRenderer: DefaultItemRenderer,
+  defaultMode: ALL
 };
+
 /**
- *  mOptions:{
+ *  options:{
     a: {
         label: 'LabelA',
         description: 'A的描述',
@@ -69,11 +65,14 @@ class Form{
   mUpdateCallback;
   mCallbackOrder = -1;
 
+  constructor(updateCallback){
+    this.mUpdateCallback = updateCallback;
+  }
   getMode = ()=>{
-    return this.mMode;
+    return this.mMode || defaultProps.defaultMode;
   };
   setMode = (mode)=>{
-    this.mMode = mode || this.mMode || ALL;
+    this.mMode = mode;
   };
   getOption = ()=>{
     return this.mOptions;
@@ -82,14 +81,11 @@ class Form{
     this.mOptions = options || {};
   };
   setItemRenderer = (itemRenderer)=>{
-    this.mItemRenderer = itemRenderer || DefaultItemRenderer;
+    this.mItemRenderer = itemRenderer;
   };
-  constructor(updateCallback){
-    this.mUpdateCallback = updateCallback;
-  }
-  $injectDefault(){
-    this.inject(helperComponentImpls);
-  }
+  getItemRenderer = ()=>{
+    return this.mItemRenderer || defaultProps.defaultItemRenderer;
+  };
   getValue = (name)=>{
     if(this.mOptions.hasOwnProperty(name)){
       let option = this.mOptions[name];
@@ -296,10 +292,10 @@ class Form{
    */
   $doUpdate = (name, updateValidate=false)=>{
     if(updateValidate){
-      if(this.mMode != NONE){
-        if(name != void 0 && this.mMode == ITEM){
+      if(this.getMode() != NONE){
+        if(name != void 0 && this.getMode() == ITEM){
           this.$doValidate(name, true);
-        }else if(this.mMode == ALL){
+        }else if(this.getMode() == ALL){
           this.validate();
         }
       }
@@ -307,8 +303,6 @@ class Form{
     this.mUpdateCallback();
   };
   $destroy = ()=>{
-    this.initialValues = null;
-    this.values = null;
     this.mOptions = null;
     this.mUpdateCallback = null;
   };
@@ -319,12 +313,12 @@ class Form{
       hasChanged && needUpdate && this.$doUpdate(name, true);
     };
   };
-  inject = (ComponentImpl, itemRenderer, customDisplayName)=>{
+  registerComponent = (ComponentImpl, itemRenderer, customDisplayName)=>{
     if(!ComponentImpl){
       return;
     }
     if(Array.isArray(ComponentImpl)){
-      return ComponentImpl.map((ComponentImpl)=>this.inject(ComponentImpl));
+      return ComponentImpl.map((ComponentImpl)=>this.registerComponent(ComponentImpl));
     }
     let displayName = customDisplayName || ComponentImpl.displayName || ComponentImpl.name;
     if(!displayName){
@@ -335,7 +329,7 @@ class Form{
       return this[displayName];
     }
     return this[displayName] = ({name, onChange, decorator, ...props})=>{
-      let ItemRenderer = itemRenderer || this.mItemRenderer;
+      let ItemRenderer = itemRenderer || this.getItemRenderer();
       let option = this.mOptions[name];
       let {label, help, required, description, status, error} = option || {};
       let element = <ComponentImpl onChange={this.$createHandler(name, onChange)} value={this.getValue(name)} {...props}/>;
@@ -353,13 +347,13 @@ class Form{
     };
   };
 }
-let create = (ItemRenderer, mode, options, components)=>WrappedComponent =>class FormWrapper extends React.Component{
+let create = (options, components)=>WrappedComponent =>class FormWrapper extends React.Component{
   componentWillMount(){
     this.form = new Form(::this.forceUpdate);
-    this.form.$injectDefault();
-    this.form.inject(components);
-    this.form.setItemRenderer(ItemRenderer);
-    this.form.setMode(mode);
+    this.form.registerComponent(defaultProps.defaultComponents);
+    this.form.registerComponent(components);
+    // this.form.setItemRenderer(ItemRenderer);
+    // this.form.setMode(mode);
     this.form.setOption(options);
   }
   componentWillUnmount(){
@@ -372,9 +366,20 @@ let create = (ItemRenderer, mode, options, components)=>WrappedComponent =>class
 };
 
 let FormLite = create();
-
 FormLite.create = create;
-FormLite.inject = inject;
+FormLite.registerComponent = function (components) {
+  components.forEach((component)=>{
+    if(defaultProps.defaultComponents.indexOf(component) == -1) {
+      defaultProps.defaultComponents.push(component);
+    }
+  });
+};
+FormLite.setDefaultItemRenderer = function(defaultItemRenderer){
+  defaultProps.defaultItemRenderer = defaultItemRenderer;
+};
+FormLite.setDefaultMode = function(defaultMode){
+  defaultProps.defaultMode = defaultMode;
+};
 
 FormLite.ALL = ALL;
 FormLite.ITEM = ITEM;
