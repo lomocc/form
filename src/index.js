@@ -1,4 +1,5 @@
-import React from "react";
+import React from 'react';
+import assign from 'object-assign';
 /**
  * @param label
  * @param help
@@ -18,8 +19,20 @@ const DefaultItemRenderer = ({label, help, required, description, children, vali
     </div>
   );
 };
+/**
+ * 每次表单值改变时自动验证全部值
+ * @type {string}
+ */
 const ALL = 'all';
+/**
+ * 每次表单值改变时只自动验证当前值
+ * @type {string}
+ */
 const ITEM = 'item';
+/**
+ * 每次表单值改变时不自动验证表单
+ * @type {string}
+ */
 const NONE = 'none';
 
 let defaultProps = {
@@ -65,14 +78,36 @@ class Form{
   getMode = ()=>{
     return this.mMode || defaultProps.defaultMode;
   };
+  /**
+   * 设置表单验证模式
+   * ALL: 自动验证所有值, ITEM: 只验证当前修改值， NONE: 不自动验证
+   * @param mode
+   */
   setMode = (mode)=>{
     this.mMode = mode;
   };
   getOption = ()=>{
     return this.mOptions;
   };
-  setOption = (options)=>{
-    this.mOptions = options || {};
+  /**
+   * 设置表单选项
+   * @param options
+   * @param merge 是否合并，默认值: false（不合并）
+     */
+  setOption = (options, merge=false)=>{
+    if(!merge){
+      this.mOptions = options || {};
+    }else{
+      if(!this.mOptions){
+        this.mOptions = options || {};
+      }else{
+        for (let name in options) {
+          if(options.hasOwnProperty(name)) {
+            this.mOptions[name] = assign({}, this.mOptions[name], options[name]);
+          }
+        }
+      }
+    }
   };
   setItemRenderer = (itemRenderer)=>{
     this.mItemRenderer = itemRenderer;
@@ -80,38 +115,66 @@ class Form{
   getItemRenderer = ()=>{
     return this.mItemRenderer || defaultProps.defaultItemRenderer;
   };
+  /**
+   * 获取单个表单值
+   * @param name
+   * @returns {*}
+   */
   getValue = (name)=>{
     if(this.mOptions.hasOwnProperty(name)){
       let option = this.mOptions[name];
       return option.hasOwnProperty('value')?option.value:option.initialValue;
     }
   };
+  /**
+   * 获取表单所有值
+   * @returns {{}} 键值对{a:1, b:2}
+   */
   getValues = ()=>{
     let values = {};
     for (let name in this.mOptions) {
-      values[name] = this.getValue(name);
+      if(this.mOptions.hasOwnProperty(name)) {
+        values[name] = this.getValue(name);
+      }
     }
     return values;
   };
+  /**
+   * 获取表单错误
+   * @returns {string}
+   */
   getError = (name)=>{
     if(this.mOptions.hasOwnProperty(name)){
       let option = this.mOptions[name];
       return option.hasOwnProperty('error')?option.error:null;
     }
   };
+  /**
+   * 获取表单错误
+   * @returns {[string]}
+   */
   getErrors = ()=>{
     let errors = null;
     for (let name in this.mOptions) {
-      let error = this.getError(name);
-      if(error){
-        if(!errors) {
-          errors = {};
+      if(this.mOptions.hasOwnProperty(name)) {
+        let error = this.getError(name);
+        if(error){
+          if(!errors) {
+            errors = {};
+          }
+          errors[name] = error;
         }
-        errors[name] = error;
       }
     }
     return errors;
   };
+  /**
+   * 设置值
+   * @param name
+   * @param value
+   * @param needUpdate
+   * @returns {boolean}
+   */
   setValue = (name, value, needUpdate=false)=>{
     if(this.mOptions.hasOwnProperty(name)){
       let oldValue = this.mOptions[name].value;
@@ -128,12 +191,20 @@ class Form{
       return true;
     }
   };
+  /**
+   * 批量设置值
+   * @param values 键值对 {a: 1, b:2}
+   * @param needUpdate
+   * @returns {boolean}
+   */
   setValues = (values, needUpdate=false)=>{
     let hasChanged = false;
     for (let name in values) {
-      let value = values[name];
-      if(this.setValue(name, value)){
-        hasChanged = true;
+      if(values.hasOwnProperty(name)) {
+        let value = values[name];
+        if(this.setValue(name, value)){
+          hasChanged = true;
+        }
       }
     }
     hasChanged && needUpdate && this.$doUpdate(null, true);
@@ -154,13 +225,23 @@ class Form{
   removeValues = (needUpdate=false)=>{
     let hasChanged = false;
     for (let name in this.mOptions) {
-      if(this.removeValue(name)){
-        hasChanged = true;
+      if(this.mOptions.hasOwnProperty(name)) {
+        if (this.removeValue(name)) {
+          hasChanged = true;
+        }
       }
     }
     hasChanged && needUpdate && this.$doUpdate(null, true);
     return hasChanged;
   };
+  /**
+   * 设置默认值
+   * @param name
+   * @param value
+   * @param needUpdate
+   * @param updateValidate
+   * @returns {boolean}
+     */
   setInitialValue = (name, value, needUpdate=false, updateValidate=false)=>{
     if(this.mOptions.hasOwnProperty(name)){
       let oldValue = this.mOptions[name].initialValue;
@@ -177,12 +258,21 @@ class Form{
       return true;
     }
   };
+  /**
+   * 批量设置默认值
+   * @param values
+   * @param needUpdate
+   * @param updateValidate
+   * @returns {boolean}
+   */
   setInitialValues = (values, needUpdate=false, updateValidate=false)=>{
     let hasChanged = false;
     for (let name in values) {
-      let value = values[name];
-      if(this.setInitialValue(name, value)){
-        hasChanged = true;
+      if(values.hasOwnProperty(name)) {
+        let value = values[name];
+        if (this.setInitialValue(name, value)) {
+          hasChanged = true;
+        }
       }
     }
     hasChanged && needUpdate && this.$doUpdate(null, updateValidate);
@@ -203,8 +293,10 @@ class Form{
   removeInitialValues = (needUpdate=false, updateValidate=false)=>{
     let hasChanged = false;
     for (let name in this.mOptions) {
-      if(this.removeInitialValue(name)){
-        hasChanged = true;
+      if(this.mOptions.hasOwnProperty(name)) {
+        if (this.removeInitialValue(name)) {
+          hasChanged = true;
+        }
       }
     }
     hasChanged && needUpdate && this.$doUpdate(null, updateValidate);
@@ -214,7 +306,8 @@ class Form{
     return updateOrder?++this.mCallbackOrder:this.mCallbackOrder;
   };
   /**
-   * 验证
+   * 验证表单
+   * @param names
    * @param cb
    */
   validate = (names=null, cb=null)=>{
@@ -228,8 +321,10 @@ class Form{
       }
       names = [];
       for (let name in this.mOptions) {
-        validateCount ++;
-        names.push(name);
+        if(this.mOptions.hasOwnProperty(name)) {
+          validateCount++;
+          names.push(name);
+        }
       }
     }
     names && names.forEach((name)=>{
@@ -307,6 +402,13 @@ class Form{
       hasChanged && needUpdate && this.$doUpdate(name, true);
     };
   };
+  /**
+   * 注册组件
+   * @param ComponentImpl
+   * @param itemRenderer
+   * @param customDisplayName
+   * @returns {*}
+     */
   registerComponent = (ComponentImpl, itemRenderer, customDisplayName)=>{
     if(!ComponentImpl){
       return;
@@ -361,6 +463,10 @@ let create = (options, components)=>WrappedComponent =>class FormWrapper extends
 
 let FormLite = create();
 FormLite.create = create;
+/**
+ * 注册全局通用组件
+ * @param components
+ */
 FormLite.registerComponent = function (components) {
   components.forEach((component)=>{
     if(defaultProps.defaultComponents.indexOf(component) == -1) {
@@ -368,9 +474,17 @@ FormLite.registerComponent = function (components) {
     }
   });
 };
+/**
+ * 设置默认渲染器
+ * @param defaultItemRenderer
+ */
 FormLite.setDefaultItemRenderer = function(defaultItemRenderer){
   defaultProps.defaultItemRenderer = defaultItemRenderer;
 };
+/**
+ * 设置默认验证模式
+ * @param defaultMode
+ */
 FormLite.setDefaultMode = function(defaultMode){
   defaultProps.defaultMode = defaultMode;
 };

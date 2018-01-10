@@ -19,7 +19,7 @@ function getConf(filename, conf) {
         loader: 'babel-loader'
       }]
     },
-    externals: ['react', 'react-dom']
+    externals: ['react', 'object-assign']
   };
   return assign(baseConf, conf);
 }
