@@ -13,14 +13,8 @@ import React from "react";
 const DefaultItemRenderer = ({label, help, required, description, children, validating, error})=>{
   return (
     <div>
-      [DefaultItemRenderer]
-      label:{label}
-      required:{required}
-      description:{description}
-      help:{help}
-      children:{children}
-      validating:{validating}
-      error:{error}
+      {children}
+      {JSON.stringify({label, help, required, description, validating, error})}
     </div>
   );
 };
