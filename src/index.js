@@ -448,6 +448,7 @@ let create = (options, components)=>WrappedComponent =>class FormWrapper extends
     // this.form.setItemRenderer(ItemRenderer);
     // this.form.setMode(mode);
     this.form.setOption(options);
+    this.forceUpdate();
   }
   componentWillUnmount(){
     if(this.form){
