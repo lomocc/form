@@ -3,7 +3,7 @@
 /dist
 /npm-debug.*
 /src
-/__test__
+/__tests__
 /jest
 .babelrc
 .editorconfig
