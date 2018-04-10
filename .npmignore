@@ -1,6 +1,10 @@
+/.idea
 /node_modules
+/dist
+/npm-debug.*
 /src
-/test
+/__test__
+/jest
 .babelrc
 .editorconfig
 .gitignore

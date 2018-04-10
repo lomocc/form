@@ -1,4 +1,4 @@
-.idea/
-node_modules/
-dist/
-npm-debug.*
+/.idea
+/node_modules
+/dist
+/npm-debug.*
