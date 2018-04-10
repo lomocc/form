@@ -1,21 +1,18 @@
-import React from 'react';
-import assign from 'object-assign';
+import React from "react";
+import assign from "object-assign";
 /**
- * @param label
- * @param help
+ * @param name
  * @param required
- * @param description
  * @param children
  * @param validating
  * @param error
  * @returns {XML}
  * @constructor
  */
-const DefaultItemRenderer = ({label, help, required, description, children, validating, error})=>{
+const DefaultItemRenderer = ({name, required, children, validating, error, ...props})=>{
   return (
     <div>
       {children}
-      {JSON.stringify({label, help, required, description, validating, error})}
     </div>
   );
 };
@@ -44,8 +41,6 @@ let defaultProps = {
 /**
  *  options:{
     a: {
-        label: 'LabelA',
-        description: 'A的描述',
         required: 'A必填',
         initialValue:'AAA',
         validator: [{
@@ -53,8 +48,6 @@ let defaultProps = {
         }]
     },
     b: {
-        label: 'LabelB',
-        description: 'B的描述',
         initialValue: 'BBB',
         validator(value, callback){
             setTimeout(()=>{
@@ -93,7 +86,7 @@ class Form{
    * 设置表单选项
    * @param options
    * @param merge 是否合并，默认值: false（不合并）
-     */
+   */
   setOption = (options, merge=false)=>{
     if(!merge){
       this.mOptions = options || {};
@@ -241,7 +234,7 @@ class Form{
    * @param needUpdate
    * @param updateValidate
    * @returns {boolean}
-     */
+   */
   setInitialValue = (name, value, needUpdate=false, updateValidate=false)=>{
     if(this.mOptions.hasOwnProperty(name)){
       let oldValue = this.mOptions[name].initialValue;
@@ -408,7 +401,7 @@ class Form{
    * @param itemRenderer
    * @param customDisplayName
    * @returns {*}
-     */
+   */
   registerComponent = (ComponentImpl, itemRenderer, customDisplayName)=>{
     if(!ComponentImpl){
       return;
@@ -427,16 +420,22 @@ class Form{
     return this[displayName] = ({name, onChange, decorator, ...props})=>{
       let ItemRenderer = itemRenderer || this.getItemRenderer();
       let option = this.mOptions[name];
-      let {label, help, required, description, status, error} = option || {};
-      let element = <ComponentImpl onChange={this.$createHandler(name, onChange)} value={this.getValue(name)} {...props}/>;
+      let {required, status, error} = option || {};
+      let element = (
+        <ComponentImpl
+          {...props}
+          onChange={this.$createHandler(name, onChange)}
+          value={this.getValue(name)}
+          name={name}
+        />
+      );
       return (
         <ItemRenderer
-          label={label}
+          {...props}
+          name={name}
           required={required != void 0}
-          description={description}
           status={status}
           error={error}
-          help={help}
           children={decorator?decorator(element):element}
         />
       );
@@ -444,7 +443,7 @@ class Form{
   };
 }
 let create = (options, components)=>WrappedComponent =>class FormWrapper extends React.Component{
-  componentWillMount(){
+  componentDidMount(){
     this.form = new Form(::this.forceUpdate);
     this.form.registerComponent(defaultProps.defaultComponents);
     this.form.registerComponent(components);
@@ -453,11 +452,16 @@ let create = (options, components)=>WrappedComponent =>class FormWrapper extends
     this.form.setOption(options);
   }
   componentWillUnmount(){
-    this.form.$destroy();
-    delete this.form;
+    if(this.form){
+      this.form.$destroy();
+      this.form = null;
+    }
   }
   render() {
-    return React.createElement(WrappedComponent, { ...this.props, form:this.form});
+    if(!this.form){
+      return false;
+    }
+    return React.createElement(WrappedComponent, {...this.props, form: this.form});
   }
 };
 
