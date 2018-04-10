@@ -417,18 +417,10 @@ class Form{
     if(this.hasOwnProperty(displayName)){
       return this[displayName];
     }
-    return this[displayName] = ({name, onChange, decorator, ...props})=>{
+    return this[displayName] = ({name, onChange, ...props})=>{
       let ItemRenderer = itemRenderer || this.getItemRenderer();
       let option = this.mOptions[name];
       let {required, status, error} = option || {};
-      let element = (
-        <ComponentImpl
-          {...props}
-          onChange={this.$createHandler(name, onChange)}
-          value={this.getValue(name)}
-          name={name}
-        />
-      );
       return (
         <ItemRenderer
           {...props}
@@ -436,8 +428,14 @@ class Form{
           required={required != void 0}
           status={status}
           error={error}
-          children={decorator?decorator(element):element}
-        />
+        >
+          <ComponentImpl
+            {...props}
+            name={name}
+            onChange={this.$createHandler(name, onChange)}
+            value={this.getValue(name)}
+          />
+        </ItemRenderer>
       );
     };
   };
