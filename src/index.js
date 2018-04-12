@@ -66,7 +66,13 @@ class Form{
   mCallbackOrder = -1;
 
   constructor(updateCallback){
-    this.mUpdateCallback = updateCallback;
+    this.mUpdateCallback = ()=>{
+      updateCallback(()=>{
+        if(this.onChange){
+          this.onChange(this.getErrors(), this.getValues());
+        }
+      });
+    }
   }
   getMode = ()=>{
     return this.mMode || defaultProps.defaultMode;
