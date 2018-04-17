@@ -62,17 +62,11 @@ class Form{
   mOptions;
   mMode;
   mItemRenderer;
-  mUpdateCallback;
+  mForceUpdate;
   mCallbackOrder = -1;
 
-  constructor(updateCallback){
-    this.mUpdateCallback = ()=>{
-      updateCallback(()=>{
-        if(this.onChange){
-          this.onChange(this.getErrors(), this.getValues());
-        }
-      });
-    }
+  constructor(forceUpdate){
+    this.mForceUpdate = forceUpdate;
   }
   getMode = ()=>{
     return this.mMode || defaultProps.defaultMode;
@@ -347,7 +341,7 @@ class Form{
         if(callbackOrder === this.mCallbackOrder){
           option.validating = false;
           option.error = error;
-          this.mUpdateCallback();
+          this.mForceUpdate();
         }
         cb && cb();
       });
@@ -377,8 +371,9 @@ class Form{
    * 更新显示
    * @param name 待更新的属性名
    * @param updateValidate 是否需要验证
+   * @param commit 是否触发 Form onChange
    */
-  $doUpdate = (name, updateValidate=false)=>{
+  $doUpdate = (name, updateValidate=false, triggerChange=false)=>{
     if(updateValidate){
       if(this.getMode() != NONE){
         if(name != void 0 && this.getMode() == ITEM){
@@ -388,11 +383,17 @@ class Form{
         }
       }
     }
-    this.mUpdateCallback();
+    if(triggerChange){
+      this.mForceUpdate(()=>{
+        this.onChange && this.onChange(this.getErrors(), this.getValues());
+      });
+    }else{
+      this.mForceUpdate();
+    }
   };
   $destroy = ()=>{
     this.mOptions = null;
-    this.mUpdateCallback = null;
+    this.mForceUpdate = null;
   };
   $createHandler = (name, callback)=>{
     return (value)=>{
